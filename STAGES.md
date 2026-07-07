@@ -105,16 +105,16 @@
 **Goal:** Violations logged, aggregated into dashboard metrics.
 
 **Checklist:**
-- [ ] `backend/src/analytics/event_logger.py` — `EventLogger` class: `log_violation()`, `log_scan()`, `get_all_events()`, `get_zone_stats()`, `get_summary()`
-- [ ] Event log stored in memory (session-scoped dict keyed by session_id) — no DB
-- [ ] `backend/src/analytics/metrics.py` — total scans, total violations, compliance rate, violations per zone, violations per PPE type, zone hotspot ranking, timeline
-- [ ] `backend/src/analytics/hotspot_analysis.py` — top-N most problematic zones
-- [ ] `backend/src/analytics/export_csv.py` — export event log to CSV bytes
-- [ ] `backend/tests/test_event_logger.py` — log 10 mock events, verify summary counts
-- [ ] `backend/tests/test_metrics.py` — test zone hotspot ranking, compliance rate calc
-- [ ] `docs/stage4_analytics.md` — event schema, metrics formulas, session lifecycle
+- [x] `backend/src/analytics/event_logger.py` — `EventLogger` class: `log_violation()`, `log_scan()`, `get_all_events()`, `get_zone_stats()`, `get_summary()`
+- [x] Event log stored in memory (session-scoped dict keyed by session_id) — no DB
+- [x] `backend/src/analytics/metrics.py` — total scans, total violations, compliance rate, violations per zone, violations per PPE type, zone hotspot ranking, timeline
+- [x] `backend/src/analytics/hotspot_analysis.py` — top-N most problematic zones
+- [x] `backend/src/analytics/export_csv.py` — export event log to CSV bytes
+- [x] `backend/tests/test_event_logger.py` — log 10 mock events, verify summary counts
+- [x] `backend/tests/test_metrics.py` — test zone hotspot ranking, compliance rate calc
+- [x] `docs/stage4_analytics.md` — event schema, metrics formulas, session lifecycle
 
-**Gate:** `pytest backend/tests/test_event_logger.py backend/tests/test_metrics.py` passes. Correct results for mock session with 20+ events across 6 zones.
+**Gate:** `pytest backend/tests/test_event_logger.py backend/tests/test_metrics.py` passes. Correct results for mock session with 20+ events across 6 zones. ✅ **PASSED** (38 tests)
 
 ---
 
@@ -259,7 +259,7 @@
 | 1 | Dataset & EDA | Roboflow dataset downloaded, stats documented | ✓ Complete |
 | 2 | PPE Detection Model | YOLOv8 trained, predictor.py working | ◑ Partial (helmet OK, vest/person/gloves weak) |
 | 3 | Zone Rule Engine | Violation detection logic + tests | ✓ Complete |
-| 4 | Event Logging & Analytics | Event log + dashboard metrics | Not Started |
+| 4 | Event Logging & Analytics | Event log + dashboard metrics | ✓ Complete |
 | 5 | TTS Voice Alerts | Backend MP3 generation via edge-tts | Not Started |
 | 6 | API Layer | FastAPI routes for all features | Not Started |
 | 7 | React Frontend | 6-camera grid + live dashboard | Not Started |
