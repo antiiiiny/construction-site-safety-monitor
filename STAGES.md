@@ -123,21 +123,21 @@
 **Goal:** Backend generates MP3 audio for violations.
 
 **Checklist:**
-- [ ] `backend/src/alerts/message_builder.py` — builds natural-language messages:
+- [x] `backend/src/alerts/message_builder.py` — builds natural-language messages:
   - high: "Warning, {zone}. {missing} required. This is a high-risk area."
   - medium: "Attention, {zone}. {missing} required."
   - low: "Notice, {zone}. {missing} recommended."
-- [ ] `backend/src/alerts/tts_engine.py` — `TTSEngine` class:
+- [x] `backend/src/alerts/tts_engine.py` — `TTSEngine` class:
   - `generate_audio(message) -> bytes` (async, returns MP3 bytes)
   - Primary: `edge-tts` with configurable voice (`en-US-AriaNeural` default)
   - Fallback: `gTTS` if edge-tts fails
   - Final fallback: return None (text-only, logged)
-- [ ] `backend/src/alerts/speaker.py` — optional zone-to-voice mapping (Zone 3 welding → male voice)
-- [ ] `backend/tests/test_message_builder.py` — message generation per zone, severity variation, single vs multiple missing PPE
-- [ ] `backend/tests/test_tts_engine.py` — mock edge-tts, verify MP3 bytes returned; test gTTS fallback path
-- [ ] `docs/stage5_tts.md` — backend design, edge-tts unofficial endpoint caveat, fallback chain
+- [x] `backend/src/alerts/speaker.py` — optional zone-to-voice mapping (Zone 3 welding → male voice)
+- [x] `backend/tests/test_message_builder.py` — message generation per zone, severity variation, single vs multiple missing PPE
+- [x] `backend/tests/test_tts_engine.py` — mock edge-tts, verify MP3 bytes returned; test gTTS fallback path
+- [x] `docs/stage5_tts.md` — backend design, edge-tts unofficial endpoint caveat, fallback chain
 
-**Gate:** `pytest backend/tests/test_message_builder.py backend/tests/test_tts_engine.py` passes. `TTSEngine.generate_audio()` returns non-empty MP3 bytes for a sample message (or degrades gracefully).
+**Gate:** `pytest backend/tests/test_message_builder.py backend/tests/test_tts_engine.py` passes. `TTSEngine.generate_audio()` returns non-empty MP3 bytes for a sample message (or degrades gracefully). ✅ **PASSED** (21 tests)
 
 ---
 
