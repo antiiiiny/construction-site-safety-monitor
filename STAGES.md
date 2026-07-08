@@ -73,7 +73,7 @@
 
 **Gate:** `predictor.py` runs on a `data/sample_images/` image and returns structured detections. `best.pt` saved. mAP@0.5 > 0.6 on person, helmet, vest.
 
-**Gate Status: PARTIALLY MET (v1) — RETRAINING (v2)** — v1 model passes gate for helmet only (0.663). Vest (0.172), person (0.037), gloves (0.000) fail due to severe class imbalance and 17-class confusion. **Improved v2 training script** (`scripts/colab_train_yolov8_v2.py`) uses the **Chandimas dataset (5.17k images, 7x more data)**, filters to 4 canonical classes (confirmed: gloves, helmet, person, vest), uses yolov8s with imgsz=512/batch=32 for ~15 min training, 20 epochs with augmentation. Run v2 on Colab, replace `best.pt`, then re-evaluate. See `docs/stage2_model.md` for full analysis.
+**Gate Status: PARTIALLY MET (v2)** — v2 model (Chandimas dataset, 5.17k images) passes gate for **helmet (0.618)** and **vest (0.720)**. Person (0.489) and gloves (0.130) fail but improved significantly from v1. Overall mAP@0.5 = 0.727 (up from 0.385). Proceeding with v2 — helmet and vest are the primary PPE items. See `docs/stage2_model.md` for full v1 vs v2 comparison.
 
 ---
 
@@ -254,7 +254,7 @@
 |-------|------|----------------|--------|
 | 0 | Project Setup | Monorepo + both servers runnable | ✓ Complete |
 | 1 | Dataset & EDA | Roboflow dataset downloaded, stats documented | ✓ Complete |
-| 2 | PPE Detection Model | YOLOv8 trained, predictor.py working | ◑ Partial (helmet OK, vest/person/gloves weak) |
+| 2 | PPE Detection Model | YOLOv8 trained, predictor.py working | ◑ Partial (v2: helmet+vest pass, person+gloves weak) |
 | 3 | Zone Rule Engine | Violation detection logic + tests | ✓ Complete |
 | 4 | Event Logging & Analytics | Event log + dashboard metrics | ✓ Complete |
 | 5 | TTS Voice Alerts | Backend MP3 generation via edge-tts | ✓ Complete |

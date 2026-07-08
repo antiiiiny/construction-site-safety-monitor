@@ -76,9 +76,9 @@ def main() -> None:
     print("=" * 60)
     print("  Construction Site Safety Monitor — Dev Server")
     print("=" * 60)
-    print(f"  Backend  : http://localhost:8000  (FastAPI)")
-    print(f"  Frontend : http://localhost:5173  (Vite)")
-    print(f"  API docs : http://localhost:8000/docs")
+    print("  Backend  : http://localhost:8000  (FastAPI)")
+    print("  Frontend : http://localhost:5173  (Vite)")
+    print("  API docs : http://localhost:8000/docs")
     print("=" * 60)
     print("  Press Ctrl+C to stop both servers.\n")
 
