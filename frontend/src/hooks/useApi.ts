@@ -13,6 +13,7 @@ import {
   getViolationsPerZone,
   getZones,
   scanZone,
+  simulateSession,
 } from "../api/endpoints";
 
 /** Query keys for cache invalidation. */
@@ -133,5 +134,16 @@ export function useClearSession() {
 export function useDownloadReport() {
   return useMutation({
     mutationFn: (siteName?: string) => downloadReport(siteName),
+  });
+}
+
+/** Simulate a session with mock data. Invalidates all data on success. */
+export function useSimulateSession() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (numScans?: number) => simulateSession(numScans),
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+    },
   });
 }

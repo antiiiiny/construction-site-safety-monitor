@@ -163,6 +163,24 @@ class TestMetrics:
         assert response.status_code == 200
         assert response.json()["status"] == "cleared"
 
+    def test_simulate_session(self) -> None:
+        """Simulate endpoint should populate the event log with mock data."""
+        response = client.post("/api/simulate?num_scans=12")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "simulated"
+        assert data["total_scans"] == 12
+        assert data["total_violations"] > 0
+        assert 0.0 <= data["compliance_rate"] <= 1.0
+
+    def test_simulate_then_metrics(self) -> None:
+        """After simulation, metrics should reflect the mock data."""
+        client.post("/api/simulate?num_scans=12")
+        response = client.get("/api/metrics")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_scans"] == 12
+
 
 class TestTTS:
     """Tests for POST /api/tts."""

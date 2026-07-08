@@ -119,3 +119,17 @@ export async function downloadReport(siteName = "Construction Site"): Promise<vo
 export async function clearSession(): Promise<void> {
   await apiClient.post("/api/clear");
 }
+
+/** Simulate a session with mock data. Populates the event log. */
+export async function simulateSession(numScans = 24): Promise<{
+  status: string;
+  total_scans: number;
+  total_violations: number;
+  compliance_rate: number;
+  most_unsafe_zone: number | null;
+}> {
+  const res = await apiClient.post("/api/simulate", null, {
+    params: { num_scans: numScans },
+  });
+  return res.data;
+}

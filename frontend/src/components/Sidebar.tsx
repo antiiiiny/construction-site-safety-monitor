@@ -1,7 +1,7 @@
 /** Sidebar controls — confidence, TTS toggle, clear session, PDF. */
 
 import { useStore } from "../store/appStore";
-import { useClearSession, useDownloadReport } from "../hooks/useApi";
+import { useClearSession, useDownloadReport, useSimulateSession } from "../hooks/useApi";
 
 export function Sidebar() {
   const {
@@ -17,6 +17,7 @@ export function Sidebar() {
 
   const clearMutation = useClearSession();
   const reportMutation = useDownloadReport();
+  const simulateMutation = useSimulateSession();
 
   return (
     <aside className="w-full space-y-4 lg:w-64">
@@ -85,6 +86,15 @@ export function Sidebar() {
 
         {/* Actions */}
         <div className="space-y-2 px-4 py-3">
+          <button
+            onClick={() => simulateMutation.mutate(24)}
+            disabled={simulateMutation.isPending}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-sky-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-sky-600 disabled:opacity-50"
+          >
+            <span>▶️</span>
+            {simulateMutation.isPending ? "Simulating..." : "Start Simulation"}
+          </button>
+
           <button
             onClick={() => clearMutation.mutate()}
             disabled={clearMutation.isPending}

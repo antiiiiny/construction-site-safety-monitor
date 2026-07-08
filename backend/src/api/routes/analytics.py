@@ -179,3 +179,89 @@ async def clear_session() -> dict[str, str]:
 
     reset_event_logger()
     return {"status": "cleared"}
+
+
+@router.post("/simulate")
+async def simulate_session(
+    num_scans: int = Query(24, ge=1, le=100, description="Number of mock scans"),
+) -> dict[str, object]:
+    """Populate the event log with simulated session data.
+
+    Generates realistic mock scans and violations across all 6 zones.
+    Useful for demos and testing the dashboard without uploading images.
+
+    Args:
+        num_scans: Number of scans to simulate (default 24).
+
+    Returns:
+        Dict with simulation summary (scans, violations, compliance rate).
+    """
+    import random
+    from datetime import UTC, datetime, timedelta
+
+    from backend.src.rules.models import Violation
+    from backend.src.rules.zone_config import get_zone
+
+    logger_obj = get_event_logger()
+    logger_obj.clear()  # Start fresh
+
+    random.seed(42)  # Reproducible
+    zone_names = {z.zone_id: z.name for z in [get_zone(i) for i in range(1, 7)]}
+    zone_required_ppe = {z.zone_id: z.required_ppe for z in [get_zone(i) for i in range(1, 7)]}
+    base_time = datetime.now(UTC) - timedelta(hours=8)
+
+    for i in range(num_scans):
+        zone_id = (i % 6) + 1
+        scan_time = base_time + timedelta(minutes=i * 20)
+        required = zone_required_ppe[zone_id]
+        has_violation = random.random() < 0.6
+
+        if has_violation:
+            num_missing = random.randint(1, min(2, len(required)))
+            missing = random.sample(required, num_missing)
+            severity = "high" if zone_id == 3 or num_missing >= 2 else "medium"
+
+            v = Violation(
+                zone_id=zone_id,
+                zone_name=zone_names[zone_id],
+                person_bbox=(
+                    random.randint(50, 200),
+                    random.randint(50, 200),
+                    random.randint(300, 500),
+                    random.randint(400, 700),
+                ),
+                missing_ppe=missing,
+                severity=severity,
+                timestamp=scan_time.isoformat(),
+            )
+
+            detections = [{"class_name": "person", "confidence": 0.92, "bbox": [100, 100, 300, 600]}]
+            for ppe in required:
+                if ppe not in missing:
+                    detections.append({
+                        "class_name": ppe,
+                        "confidence": random.uniform(0.75, 0.95),
+                        "bbox": [random.randint(120, 250), random.randint(80, 300),
+                                 random.randint(200, 350), random.randint(200, 500)],
+                    })
+
+            logger_obj.log_scan(zone_id, detections, [v])
+        else:
+            detections = [{"class_name": "person", "confidence": 0.95, "bbox": [100, 100, 300, 600]}]
+            for ppe in required:
+                detections.append({
+                    "class_name": ppe,
+                    "confidence": random.uniform(0.80, 0.98),
+                    "bbox": [random.randint(120, 250), random.randint(80, 300),
+                             random.randint(200, 350), random.randint(200, 500)],
+                })
+            logger_obj.log_scan(zone_id, detections, [])
+
+    summary = logger_obj.get_summary()
+    return {
+        "status": "simulated",
+        "total_scans": summary["total_scans"],
+        "total_violations": summary["total_violations"],
+        "compliance_rate": summary["compliance_rate"],
+        "most_unsafe_zone": summary.get("most_unsafe_zone"),
+    }

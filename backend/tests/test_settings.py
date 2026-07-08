@@ -33,9 +33,10 @@ def test_openrouter_defaults() -> None:
 
 
 def test_llm_enabled_flag() -> None:
-    """llm_enabled should be True only if API key is set and non-empty."""
-    # In test env, key is not set, so should be False
-    assert settings.llm_enabled is False
+    """llm_enabled should match whether the OpenRouter API key is set."""
+    # If .env has a real key, this is True; if not, False.
+    # Either way, it should match the underlying key presence.
+    assert settings.llm_enabled is bool(settings.openrouter_api_key)
 
 
 def test_roboflow_configured_flag() -> None:
