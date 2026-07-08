@@ -94,6 +94,14 @@ class Predictor:
         """
         conf = confidence or self.confidence_threshold
 
+        # Ultralytics doesn't accept raw bytes directly — convert to PIL Image
+        if isinstance(image, bytes):
+            import io
+
+            from PIL import Image as PILImage
+
+            image = PILImage.open(io.BytesIO(image))
+
         results = self.model.predict(
             source=image,
             conf=conf,
@@ -164,6 +172,15 @@ class Predictor:
             List of detection dicts with raw class_name (not normalized).
         """
         conf = confidence or self.confidence_threshold
+
+        # Ultralytics doesn't accept raw bytes directly — convert to PIL Image
+        if isinstance(image, bytes):
+            import io
+
+            from PIL import Image as PILImage
+
+            image = PILImage.open(io.BytesIO(image))
+
         results = self.model.predict(source=image, conf=conf, verbose=False)
 
         if not results:
