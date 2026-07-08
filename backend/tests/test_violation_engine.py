@@ -22,6 +22,7 @@ from backend.src.rules.violation_engine import (
     _associate_ppe_to_persons,
     _bbox_center,
     _determine_severity,
+    _infer_person_from_ppe,
     _is_inside,
     check_compliance,
 )
@@ -362,3 +363,61 @@ class TestViolationDataclass:
         )
         assert v.timestamp is not None
         assert "T" in v.timestamp  # ISO format
+
+
+# ---- Person inference tests (weak `person` class) ----
+
+
+class TestPersonInference:
+    """When the model misses `person` but detects PPE, infer a worker.
+
+    The trained model's `person` class is weak (mAP ~0.49) and often
+    fails to detect workers who are present. The rule engine should infer
+    a person from detected PPE so missing-PPE violations are still raised.
+    """
+
+    def test_helmet_only_infers_person_and_flags_vest(self) -> None:
+        """Zone 1: helmet detected, no person, no vest → vest violation."""
+        detections = [
+            make_ppe("helmet", 150, 80, 250, 180),
+        ]
+        violations = check_compliance(detections, zone_id=1)
+        assert len(violations) == 1
+        assert "vest" in violations[0].missing_ppe
+        assert "helmet" not in violations[0].missing_ppe
+
+    def test_helmet_only_welding_infers_person_and_flags_gloves_vest(self) -> None:
+        """Zone 3: helmet detected, no person → gloves + vest missing (high)."""
+        detections = [
+            make_ppe("helmet", 150, 80, 250, 180),
+        ]
+        violations = check_compliance(detections, zone_id=3)
+        assert len(violations) == 1
+        assert "gloves" in violations[0].missing_ppe
+        assert "vest" in violations[0].missing_ppe
+        assert violations[0].severity == "high"
+
+    def test_inferred_person_bbox_encloses_ppe(self) -> None:
+        """The inferred person bbox should enclose the detected PPE."""
+        ppe = [make_ppe("helmet", 150, 80, 250, 180)]
+        inferred = _infer_person_from_ppe(ppe)
+        assert inferred is not None
+        assert inferred["class_name"] == "person"
+        px1, py1, px2, py2 = inferred["bbox"]
+        # PPE bbox is inside the inferred person bbox
+        assert px1 <= 150 and py1 <= 80
+        assert px2 >= 250 and py2 >= 180
+
+    def test_no_ppe_no_inference(self) -> None:
+        """No person AND no PPE → no inference, no violations."""
+        violations = check_compliance([], zone_id=1)
+        assert len(violations) == 0
+
+    def test_inferred_person_does_not_double_count(self) -> None:
+        """Helmet + vest present, no person → compliant (no violation)."""
+        detections = [
+            make_ppe("helmet", 150, 80, 250, 180),
+            make_ppe("vest", 130, 250, 270, 450),
+        ]
+        violations = check_compliance(detections, zone_id=1)
+        assert len(violations) == 0

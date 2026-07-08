@@ -8,6 +8,15 @@ Association logic: PPE bbox center must fall inside the person bbox
 (containment). This is more robust than nearest-center-distance in
 crowded scenes.
 
+Person inference: The trained model's `person` class is weak (mAP ~0.49)
+and frequently misses workers who ARE present. To avoid silently passing
+a non-compliant worker, when no `person` is detected but PPE items ARE
+detected, we synthesize a person bbox from the union of the detected PPE
+items and run the normal compliance check. This lets the engine flag
+"missing vest" even when only a helmet was detected. (A worker wearing
+no PPE at all remains undetectable without a person class — that requires
+model retraining.)
+
 Severity assignment:
   - 'high': Welding Zone (zone 3) OR 2+ missing PPE items
   - 'medium': 1 missing PPE item in a non-welding zone
@@ -59,6 +68,49 @@ def _is_inside(
     px, py = point
     x1, y1, x2, y2 = bbox
     return x1 <= px <= x2 and y1 <= py <= y2
+
+
+def _infer_person_from_ppe(ppe_items: list[Detection]) -> Detection | None:
+    """Synthesize a person detection from detected PPE items.
+
+    When the model fails to detect a `person` but does detect PPE items
+    (helmet/vest/gloves), we infer a worker is present and build a person
+    bbox as the bounding union of all detected PPE. This lets the rule
+    engine flag missing PPE even when the weak `person` class missed the
+    worker.
+
+    Args:
+        ppe_items: List of PPE detection dicts.
+
+    Returns:
+        A synthetic person Detection (with class_name 'person'), or None
+        if there are no PPE items to infer from.
+    """
+    if not ppe_items:
+        return None
+
+    # Bounding union of all PPE items.
+    min_x = min(p["bbox"][0] for p in ppe_items)  # type: ignore[index]
+    min_y = min(p["bbox"][1] for p in ppe_items)  # type: ignore[index]
+    max_x = max(p["bbox"][2] for p in ppe_items)  # type: ignore[index]
+    max_y = max(p["bbox"][3] for p in ppe_items)  # type: ignore[index]
+
+    # Pad the union outward so the inferred person encloses the PPE
+    # (a helmet sits above the head, gloves below the torso).
+    pad_x = max(1, int((max_x - min_x) * 0.5))
+    pad_y = max(1, int((max_y - min_y) * 0.8))
+    person_bbox = [
+        min_x - pad_x,
+        min_y - pad_y,
+        max_x + pad_x,
+        max_y + pad_y,
+    ]
+
+    return {
+        "class_name": "person",
+        "confidence": min(p["confidence"] for p in ppe_items),  # type: ignore[index]
+        "bbox": [int(v) for v in person_bbox],
+    }
 
 
 def _associate_ppe_to_persons(
@@ -158,7 +210,17 @@ def check_compliance(
         elif class_name in ("helmet", "vest", "gloves"):
             ppe_items.append(det)
 
-    # No persons detected → no violations possible
+    # No persons detected → try to infer a worker from detected PPE.
+    # The model's `person` class is weak and often misses workers who are
+    # present; if PPE was detected, a person is almost certainly there.
+    inferred_person = False
+    if not persons and ppe_items:
+        inferred = _infer_person_from_ppe(ppe_items)
+        if inferred is not None:
+            persons = [inferred]
+            inferred_person = True
+
+    # Still no persons (and no PPE) → no violations possible
     if not persons:
         return []
 
