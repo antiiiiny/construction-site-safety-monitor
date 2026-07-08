@@ -1,13 +1,15 @@
 """FastAPI application entry point.
 
-Stage 0 scaffold: mounts routers, configures CORS for the Vite dev server,
-and exposes a /health endpoint. Route modules are added in Stage 6.
+Mounts all route routers, configures CORS for the Vite dev server,
+and exposes a /health endpoint.
 """
 
 from __future__ import annotations
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from backend.src.api.routes import alerts, analytics, detection, reports
 
 app = FastAPI(
     title="Construction Site Safety Monitor API",
@@ -20,7 +22,6 @@ app = FastAPI(
 )
 
 # Allow the Vite dev server (default port 5173) to call the API.
-# In production, tighten this to the deployed frontend origin.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -32,6 +33,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount route routers
+app.include_router(detection.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
+app.include_router(alerts.router, prefix="/api")
+app.include_router(reports.router, prefix="/api")
+
 
 @app.get("/health")
 async def health() -> dict[str, str]:
@@ -41,11 +48,3 @@ async def health() -> dict[str, str]:
         Dict with status "ok" if the server is running.
     """
     return {"status": "ok"}
-
-
-# Route routers will be mounted here in Stage 6, e.g.:
-# from backend.src.api.routes import detection, analytics, alerts, reports
-# app.include_router(detection.router, prefix="/api")
-# app.include_router(analytics.router, prefix="/api")
-# app.include_router(alerts.router, prefix="/api")
-# app.include_router(reports.router, prefix="/api")

@@ -9,8 +9,74 @@
   color-scheme: light;
 }
 
+:root.dark {
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #f8fafc;
+  @apply bg-surface-50 text-slate-800 dark:bg-surface-950 dark:text-slate-100;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-slate-300 dark:bg-slate-700;
+}
+
+/* ── Utility classes ── */
+
+@layer components {
+  /* Badge / pill */
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .badge-safe {
+    @apply badge bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300;
+  }
+  .badge-warning {
+    @apply badge bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300;
+  }
+  .badge-danger {
+    @apply badge bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300;
+  }
+  .badge-info {
+    @apply badge bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300;
+  }
+  .badge-neutral {
+    @apply badge bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300;
+  }
+
+  /* Severity pill */
+  .severity-pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide;
+  }
+  .severity-high {
+    @apply severity-pill bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300;
+  }
+  .severity-medium {
+    @apply severity-pill bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300;
+  }
+  .severity-low {
+    @apply severity-pill bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300;
+  }
+
+  /* Card base */
+  .card {
+    @apply rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-surface-850;
+  }
+
+  /* Section heading */
+  .section-heading {
+    @apply flex items-center gap-2 text-base font-semibold text-slate-800 dark:text-slate-100;
+  }
 }

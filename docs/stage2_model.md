@@ -150,20 +150,80 @@
 
 ## Decision
 
-**Proceeding with Option A** — the current model is sufficient for a capstone
-demo. The helmet detection (the most important PPE) works well, and the
-pipeline is functional end-to-end. Limitations are documented transparently.
+**Proceeding with Option B (retrain with improvements)** — the first
+training run (v1) only passed the gate for helmet. An improved script
+(`scripts/colab_train_yolov8_v2.py`) addresses the root causes:
 
-The rule engine (Stage 3) will be designed with this in mind:
+### v2 Improvements
+
+| Issue (v1) | Fix (v2) |
+|------------|----------|
+| 717 images (too small) | **5.17k images** (Chandimas dataset — 7x more data) |
+| 17 classes (model confused) | Filter to canonical classes only (helmet, vest, person, gloves) |
+| imgsz=640, batch=16 | **imgsz=512, batch=32** — faster training |
+| 50 epochs (stopped at 28) | **20 epochs** (enough for 5k images, ~15 min) |
+| No augmentation tuning | mosaic, mixup, HSV, rotation, flip |
+| Confidence 0.25 | Lower to 0.20 for better recall |
+
+### v2 Dataset
+
+**Chandimas Construction Safety Monitor** — 5.17k images
+- URL: https://universe.roboflow.com/chandimas-workspace/construction-safety-monitor-mlpd4
+- Classes: helmet, vest, gloves, goggles, boots + no-X counterparts
+- **Note**: May not have a `person` class. The script handles this
+  dynamically — if person is missing, trains on 3 classes and the rule
+  engine infers person presence from PPE detections.
+
+### v2 Training Configuration
+
+| Parameter | v1 (original) | v2 (improved) |
+|-----------|---------------|---------------|
+| Dataset | Roboflow Universe (717 images) | **Chandimas (5.17k images)** |
+| Model | yolov8s | **yolov8s** (same, but 7x more data) |
+| Epochs | 50 (stopped at 28) | **20 (patience=5)** |
+| Image size | 640 | **512** (faster) |
+| Batch size | 16 | **32** (better GPU utilization) |
+| Classes | 17 (all) | **Filtered to canonical only** |
+| Augmentation | Default | **mosaic, mixup, HSV, rotation, flip** |
+| Inference conf | 0.25 | **0.20** |
+
+### To Retrain
+
+1. Open `scripts/colab_train_yolov8_v2.py`
+2. Paste into a Colab notebook with T4 GPU
+3. Replace `YOUR_ROBOFLOW_API_KEY` with your key
+4. Run — takes ~15-20 minutes (5.17k images, yolov8s, 20 epochs)
+5. The script will print the actual class names from Chandimas — verify
+   the mapping is correct before training starts
+6. Download `best.pt` → `artifacts/stage2_model/best.pt`
+7. Run `python -m backend.src.detection.visualize_predictions` to verify
+8. Update this file with the new metrics
+
+### If Chandimas Doesn't Have Person Labels
+
+The Chandimas dataset may not include a `person` class (only PPE items).
+If so, the v2 script trains on 3 classes (helmet, vest, gloves). The rule
+engine can be adapted:
+- **Option A**: Infer person from helmet/vest bbox (a helmet implies a
+  person is wearing it — create a synthetic person bbox around the PPE)
+- **Option B**: Merge Chandimas + v1 dataset (v1 has Person labels)
+- **Option C**: Use a general person detection model (COCO pretrained)
+  alongside the PPE model
+
+## Rule Engine Adaptation
+
+Regardless of which model version is used, the rule engine (Stage 3) is
+designed to weight violations by model reliability:
 - Helmet violations: high confidence (model is reliable)
 - Vest violations: medium confidence (model is weak)
 - Gloves violations: low confidence / informational only (model fails)
 
 ## Files
 
-- `artifacts/stage2_model/best.pt` — trained YOLOv8s weights (22.5MB)
+- `artifacts/stage2_model/best.pt` — trained YOLOv8s weights (22.5MB, v1)
 - `artifacts/stage2_predictions/` — 4 annotated sample images
 - `backend/src/detection/predictor.py` — inference module
 - `backend/src/detection/dataset_loader.py` — dataset validation
 - `backend/src/detection/visualize_predictions.py` — prediction visualization
-- `scripts/colab_train_yolov8.py` — Colab training script
+- `scripts/colab_train_yolov8.py` — Colab training script (v1, 17 classes)
+- `scripts/colab_train_yolov8_v2.py` — **Improved** Colab training script (v2, 4 classes, yolov8m)
