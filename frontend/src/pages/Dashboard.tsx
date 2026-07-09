@@ -1,12 +1,12 @@
 /** Main dashboard page — camera grid + metrics + charts + events table. */
 
 import { CameraTile } from "../components/CameraTile";
+import { FloorPlanHeatmap } from "../components/FloorPlanHeatmap";
 import { MetricCard } from "../components/MetricCard";
 import { Sidebar } from "../components/Sidebar";
 import {
   PPEBreakdownPie,
   ViolationTimeline,
-  ViolationsPerZoneBar,
 } from "../components/ChartBuilder";
 import {
   useEvents,
@@ -135,13 +135,16 @@ export function Dashboard() {
         {/* Charts */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="card p-4">
+            <h3 className="section-heading mb-3">
+              <span>🗺️</span> Site Floor Plan — Violation Heatmap
+            </h3>
             {barQuery.isLoading ? (
               <div className="space-y-3">
                 <div className="h-5 w-1/2 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
                 <div className="h-[260px] animate-pulse rounded bg-slate-100 dark:bg-surface-800" />
               </div>
             ) : barQuery.data ? (
-              <ViolationsPerZoneBar data={barQuery.data} />
+              <FloorPlanHeatmap data={barQuery.data} />
             ) : (
               <p className="py-8 text-center text-xs text-slate-400">No zone data available.</p>
             )}

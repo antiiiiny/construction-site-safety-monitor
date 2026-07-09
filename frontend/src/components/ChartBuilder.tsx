@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Plot from "react-plotly.js";
-import type { BarChartData, PieChartData, TimelineEntry } from "../types";
+import type { PieChartData, TimelineEntry } from "../types";
 import { useStore } from "../store/appStore";
 
 /** Shared dark-mode-aware layout overrides. */
@@ -31,34 +31,6 @@ function useLayoutOverrides() {
       },
     }),
     [darkMode],
-  );
-}
-
-/** Bar chart: violations per zone. */
-export function ViolationsPerZoneBar({ data }: { data: BarChartData[] }) {
-  const layoutOverrides = useLayoutOverrides();
-
-  return (
-    <Plot
-      data={[
-        {
-          type: "bar",
-          x: data.map((d) => d.zone_name),
-          y: data.map((d) => d.violations),
-          marker: { color: "#f59e0b" },
-        },
-      ]}
-      layout={{
-        ...layoutOverrides,
-        title: { text: "Violations per Zone", ...layoutOverrides.title },
-        margin: { t: 40, b: 80, l: 40, r: 20 },
-        xaxis: { ...layoutOverrides.xaxis, tickangle: -25 },
-        yaxis: { ...layoutOverrides.yaxis, title: "Violations" },
-        height: 300,
-      }}
-      config={{ displayModeBar: false, responsive: true }}
-      style={{ width: "100%" }}
-    />
   );
 }
 
